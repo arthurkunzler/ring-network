@@ -21,12 +21,18 @@ def parse_config_file(file: str):
             start_w_token = False 
     return ip, port, hostname, time, start_w_token
 
+def run_client(app: App):
+    app.start()
+    while not app.closed:
+        # TODO fazer loop para cliente escrever mensagens e enviar com app.send_package()
+
+
 def main():
     dest_ip, port, hostname, sleeptime, start_w_token = parse_config_file(file=CONFIG_FILE)
     print(f"IP {dest_ip} port {port} hostname {hostname} sleeptime {sleeptime} start {start_w_token}")
     app = App(dest_ip=dest_ip, dest_port=port, src_port=SOURCE_PORT, hostname=hostname, sleeptime=sleeptime, start_w_token=start_w_token)
 
-    app.start()
+    run_client(app=app)
 
 if __name__ == "__main__":
     main()
