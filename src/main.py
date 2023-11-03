@@ -3,11 +3,12 @@ from models.app import App
 CONFIG_FILE = "config.txt"
 SOURCE_PORT = 12345
 
+
 def parse_config_file(file: str):
     with open(file, "r") as file:
         lines = file.readlines()
         if len(lines) < 4:
-            print(f"Arquivo de configuracoes incorretamente formatado. Tente novamente")
+            print(f"Arquivo de configurações incorretamente formatado. Tente novamente")
             exit(1)
         addresses = lines[0].strip().split(":")
         ip = addresses[0]
@@ -18,21 +19,27 @@ def parse_config_file(file: str):
         if start_w_token == "true":
             start_w_token = True
         else:
-            start_w_token = False 
+            start_w_token = False
     return ip, port, hostname, time, start_w_token
+
 
 def run_client(app: App):
     app.start()
     while not app.closed:
+        app.check_token_timeout()
         # TODO fazer loop para cliente escrever mensagens e enviar com app.send_package()
 
 
 def main():
-    dest_ip, port, hostname, sleeptime, start_w_token = parse_config_file(file=CONFIG_FILE)
+    dest_ip, port, hostname, sleeptime, start_w_token = parse_config_file(
+        file=CONFIG_FILE)
     print(f"IP {dest_ip} port {port} hostname {hostname} sleeptime {sleeptime} start {start_w_token}")
-    app = App(dest_ip=dest_ip, dest_port=port, src_port=SOURCE_PORT, hostname=hostname, sleeptime=sleeptime, start_w_token=start_w_token)
+    # Add parametros relativos ao gerenciamento de token
+    app = App(dest_ip=dest_ip, dest_port=port, src_port=SOURCE_PORT,
+              hostname=hostname, sleeptime=sleeptime, start_w_token=start_w_token)
 
     run_client(app=app)
+
 
 if __name__ == "__main__":
     main()

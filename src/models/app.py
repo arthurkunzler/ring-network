@@ -4,10 +4,11 @@ import time
 
 from src.models.package import Package
 from src.models.message import Message
+from src.models.token_manager import TokenManager
 
 
 class App:
-    def __init__(self, dest_ip: str, dest_port: int, src_port: int, hostname: str, sleeptime: int, start_w_token: bool):
+    def __init__(self, dest_ip: str, dest_port: int, src_port: int, hostname: str, sleeptime: int, start_w_token: bool, is_token_manager: bool = False, timeout_token: int = 0, minimum_time: int = 0):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.dest_ip = dest_ip
@@ -20,6 +21,9 @@ class App:
         self.my_turn = start_w_token
         self.closed = False
         self.messages_queue = list(Message)
+        self.is_token_manager = is_token_manager
+        self.token_manager = TokenManager(
+            minimum_time=minimum_time, timeout=timeout_token)
 
         self.connect_socket()
 
@@ -51,6 +55,14 @@ class App:
     def _has_message(self):
         return len(self.messages_queue) > 0
 
+    def check_token_timeout(self):
+        if (self.is_token_manager and not self.token_manager.check_timeout()):
+            # Token deu timeout, deve-se gerar um novo
+            self.token = self.token_manager.generate_token()
+
+    def remove_token(self):
+        self.token = None
+
     def send_token(self):
         # TODO
         # Implementar lógica de enviar token para a próxima máquina
@@ -79,6 +91,10 @@ class App:
     def _handle_receive_token(self, package):
         self.my_turn = True
         self.token = package.text
+        if self.is_token_manager:
+            if not self.token_manager.handle_token():
+                # TODO tratar situações de problema com token
+                pass
 
     def _handle_receive_data(self, package):
         # Se for consistente, trata a mensagem
