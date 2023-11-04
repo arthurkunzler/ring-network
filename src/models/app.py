@@ -2,28 +2,29 @@ import socket
 import threading
 import time
 
-from src.models.package import Package
-from src.models.message import Message
-from src.models.token_manager import TokenManager
+from models.package import Package
+from models.message import Message
+from models.token_manager import TokenManager
 
 
 class App:
-    def __init__(self, dest_ip: str, dest_port: int, src_port: int, hostname: str, sleeptime: int, start_w_token: bool, is_token_manager: bool = False, timeout_token: int = 0, minimum_time: int = 0):
+    def __init__(self, dest_ip: str, dest_port: int, src_port: int, hostname: str, is_token_manager: bool = False, timeout_token: int = 0, minimum_time: int = 0):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.dest_ip = dest_ip
         self.hostname = hostname
-        self.sleeptime = sleeptime
         self.dest_port = dest_port
         self.src_port = src_port
         self.token = None
 
-        self.my_turn = start_w_token
         self.closed = False
-        self.messages_queue = list(Message)
+        self.messages_queue = list()
         self.is_token_manager = is_token_manager
         self.token_manager = TokenManager(
             minimum_time=minimum_time, timeout=timeout_token)
+
+        if is_token_manager:
+            self.token_manager.generate_token()
 
         self.connect_socket()
 
