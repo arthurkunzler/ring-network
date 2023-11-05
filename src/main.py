@@ -26,7 +26,6 @@ def run_client(app: App):
     while not app.closed:
         app.check_token_timeout()
         handle_choice(app, handle_menu())
-        # TODO fazer loop para cliente escrever mensagens e enviar com app.send_package()
 
 
 def handle_choice(app: App, choice: int):

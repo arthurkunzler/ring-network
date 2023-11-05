@@ -1,3 +1,6 @@
+from src.models.constants import Prefix
+
+
 class Package:
     def __init__(self, data: str):
         self.type = None
@@ -21,11 +24,15 @@ class Package:
     # Atribui os campos conforme o tipo da mensagem
     def _split_data(self, data: str):
         parts = data.split(":")
-        self.type = data[0]
+        if data[0] == Prefix.TOKEN.value:
+            self.type = Prefix.TOKEN
+        elif data[0] == Prefix.DATA.value:
+            self.type = Prefix.DATA
+
         if len(parts) > 1:
             msg = data[1].split(";")
             self.error_control = msg[0]
             self.origin_name = msg[1]
-            self.dest_name=  msg[2]
-            self.crc = msg[3]
-            self.text = msg[4:]
+            self.dest_name =  msg[2]
+            self.crc = int(msg[3])
+            self.text = "".join(msg[4:])

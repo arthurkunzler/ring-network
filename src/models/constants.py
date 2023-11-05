@@ -1,10 +1,10 @@
 from enum import Enum
 
 
-class Answer(Enum):
-    naoexiste = 0
-    ACK = 1
-    NACK = -1
+class ErrorControl(Enum):
+    NAOEXISTE = "naoexiste"
+    ACK = "ACK"
+    NACK = "NACK"
 
 
 class Prefix(Enum):
@@ -54,5 +54,10 @@ Invalid config file. Try again!
 NOT_MANAGER = f"""
 {Style.WARNING}
 Host is NOT token manager.
+{Style.ENDC}
+"""
+INVALID_PACKAGE = f"""
+{Style.WARNING}
+Package received has invalid format.
 {Style.ENDC}
 """
