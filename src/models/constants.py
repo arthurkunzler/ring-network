@@ -12,6 +12,9 @@ class Prefix(Enum):
     DATA = '7777'
 
 
+BROADCAST_MESSAGE = 'TODOS'
+
+
 class Style:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'

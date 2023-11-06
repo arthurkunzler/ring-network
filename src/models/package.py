@@ -11,6 +11,10 @@ class Package:
         self.text = None
         self._split_data(data)
 
+    def cool_message(self):
+        # TODO deixar bonitinho o print de mensagem
+        return self.text
+
     def __repr__(self) -> str:
         return f"""
             Type: '{self.type}';
@@ -33,6 +37,6 @@ class Package:
             msg = data[1].split(";")
             self.error_control = msg[0]
             self.origin_name = msg[1]
-            self.dest_name =  msg[2]
+            self.dest_name = msg[2]
             self.crc = int(msg[3])
             self.text = "".join(msg[4:])

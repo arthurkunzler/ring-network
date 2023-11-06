@@ -6,7 +6,7 @@ import zlib
 from models.package import Package
 from models.message import Message
 from models.token_manager import TokenManager
-from src.models.constants import INVALID_PACKAGE, ErrorControl, Prefix
+from src.models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, ErrorControl, Prefix
 
 
 class App:
@@ -79,7 +79,8 @@ class App:
         if self.closed:
             return
         if package.type == Prefix.DATA:
-            pck = "7777:{0};{1};{2};{3};{4}".format(package.error_control, package.origin_name, package.dest_name, package.crc, package.text)
+            pck = "7777:{0};{1};{2};{3};{4}".format(
+                package.error_control, package.origin_name, package.dest_name, package.crc, package.text)
         elif package.type == Prefix.TOKEN:
             pck = "9000"
         package = pck.encode("utf-8")
@@ -105,17 +106,31 @@ class App:
                 # TODO tratar situações de problema com token
                 pass
 
+        else:
+            pass
+
+    def dequeue_message(self):
+        # TODO retira mensagem da fila para enviar ao próximo
+        pass
+
     def _handle_receive_data(self, package: Package):
         # Se destino for eu, verifica consistencia
         if package.dest_name == self.hostname:
             # TODO ver error_control?
-            if not self._verify_message_consistency(package):
+            if self._verify_message_consistency(package):
                 package.error_control = ErrorControl.ACK
+                print(package.cool_message())
             else:
                 package.error_control = ErrorControl.NACK
         else:
             package.error_control = ErrorControl.NAOEXISTE
-        self.insert_message(message=package)
+            if package.dest_name == BROADCAST_MESSAGE:
+                print(package.cool_message())
+
+        if package.origin_name != self.hostname:
+            self.send_package(package=package)
+
+        # self.insert_message(message=package)
 
     def _start_receive(self):
         port = self.socket.getsockname()[1]
@@ -132,7 +147,7 @@ class App:
                 print(INVALID_PACKAGE)
 
             print(f"Nova mensagem recebida: {pck}")
-    
+
     def _check_crc(self, pck: Package) -> bool:
         b_text = pck.text.encode("utf-8")
         crc = zlib.crc32(b_text)
