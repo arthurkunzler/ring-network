@@ -30,16 +30,27 @@ def run_client(app: App):
 
 def handle_choice(app: App, choice: int):
     if choice == 0:
-        # TODO tratar o envio de mensagem
-        pass
+        dest_name = ''
+        while not dest_name:
+            print('Insira o destino:')
+            dest_name = input()
+        message = ''
+        while not message:
+            print('Insira a mensagem')
+            message = input()
+        app.add_message(dest_name=dest_name, message=message)
+
     elif choice == 1:
-        # TODO printar status
-        pass
+        print(app.app_status)
     elif choice == 2:
         if not app.is_token_manager:
             print(NOT_MANAGER)
         else:
             print(app.token_manager)
+    elif choice == 3:
+        app.generate_token()
+    elif choice == 4:
+        app.remove_token()
 
 
 def handle_menu() -> int:
@@ -47,7 +58,7 @@ def handle_menu() -> int:
     while not valid:
         print(MENU)
         choice = int(input())
-        valid = choice >= 0 and choice <= 2
+        valid = choice >= 0 and choice <= 4
         if not valid:
             print(INVALID_OPTION)
 

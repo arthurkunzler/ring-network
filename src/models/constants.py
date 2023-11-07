@@ -34,9 +34,11 @@ SOURCE_PORT = 12345
 MENU = f"""
 {Style.BOLD}
 ### MENU ###
- 0- Send Message;
+ 0- Add Message to queue;
  1- Status;
  2- Token Stats;
+ 3- Generate Token;
+ 4- Remove Token;
 {Style.ENDC}
 """
 

@@ -6,7 +6,7 @@ import zlib
 from models.package import Package
 from models.message import Message
 from models.token_manager import TokenManager
-from src.models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, ErrorControl, Prefix
+from src.models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, NOT_MANAGER, ErrorControl, Prefix
 
 
 class App:
@@ -48,15 +48,23 @@ class App:
             len(self.messages_queue) > 0) else None
         return message
 
-    def insert_message(self, message: Package):
+    def add_message(self, dest_name: str, message: str):
+        data = f"7777;{self.hostname};{dest_name};{message}"
+        self._insert_message(Package(data=data))
+
+    def _insert_message(self, message: Package):
         if len(self.messages_queue) < 10:
-            # TODO
-            # Fazer tratamento de mensagem antes de inserir?
             self.messages_queue.append(message)
             return True
         else:
             print('Lista de mensagens está cheia!')
             return False
+
+    def generate_token(self):
+        if self.is_token_manager:
+            self.token_manager.generate_token()
+        else:
+            print(NOT_MANAGER)
 
     def _has_message(self):
         return len(self.messages_queue) > 0
@@ -108,6 +116,10 @@ class App:
 
         else:
             pass
+
+    def app_status(self):
+        # TODO 
+        return ''
 
     def dequeue_message(self):
         # TODO retira mensagem da fila para enviar ao próximo
