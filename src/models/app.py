@@ -6,7 +6,7 @@ import zlib
 from models.package import Package
 from models.message import Message
 from models.token_manager import TokenManager
-from src.models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, NOT_MANAGER, ErrorControl, Prefix
+from models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, NOT_MANAGER, TOKEN_GENERATED, ErrorControl, Prefix
 
 
 class App:
@@ -35,9 +35,10 @@ class App:
             target=self._start_receive, args=(), daemon=True)
         self.thread_receiver.start()
         time.sleep(1)
-        while not self.closed:
-            if self.token and len(self.messages_queue) > 0:
-                self.send_package(package=self.pop_first_message())
+        # TODO
+        # while not self.closed:
+        #     if self.token and len(self.messages_queue) > 0:
+        #         self.send_package(package=self.pop_first_message())
 
     def connect_socket(self):
         source_ip = self.socket.getsockname()[0]
@@ -49,8 +50,13 @@ class App:
         return message
 
     def add_message(self, dest_name: str, message: str):
-        data = f"7777;{self.hostname};{dest_name};{message}"
-        self._insert_message(Package(data=data))
+        # TODO
+        # Adicionar probabilidade de enviar erros aleatórios
+        crc = App._generate_crc(message)
+        data = f"7777:naoexiste;{self.hostname};{dest_name};{str(crc)};{message}"
+        pkg = Package(data=data)
+        print(f'pkg:\n {pkg}')
+        self._insert_message(pkg)
 
     def _insert_message(self, message: Package):
         if len(self.messages_queue) < 10:
@@ -63,6 +69,7 @@ class App:
     def generate_token(self):
         if self.is_token_manager:
             self.token_manager.generate_token()
+            print(TOKEN_GENERATED)
         else:
             print(NOT_MANAGER)
 
@@ -164,3 +171,8 @@ class App:
         b_text = pck.text.encode("utf-8")
         crc = zlib.crc32(b_text)
         return crc == pck.crc
+
+    @staticmethod
+    def _generate_crc(text: str) -> int:
+        ecd = text.encode("utf-8")
+        return zlib.crc32(ecd)

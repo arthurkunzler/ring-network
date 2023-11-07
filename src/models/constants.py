@@ -56,6 +56,13 @@ Invalid config file. Try again!
 {Style.ENDC}
 """
 
+TOKEN_GENERATED  = f"""
+{Style.OKBLUE}
+{Style.BOLD}
+Token has been generated!
+{Style.ENDC}
+"""
+
 NOT_MANAGER = f"""
 {Style.WARNING}
 Host is NOT token manager.
