@@ -4,9 +4,8 @@ import time
 import zlib
 
 from models.package import Package
-from models.message import Message
 from models.token_manager import TokenManager
-from models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, NOT_MANAGER, TOKEN_GENERATED, ErrorControl, Prefix
+from models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, NOT_MANAGER, TOKEN_GENERATED, TOKEN_REMOVED, ErrorControl, Prefix
 
 
 class App:
@@ -77,11 +76,12 @@ class App:
         return len(self.messages_queue) > 0
 
     def check_token_timeout(self):
-        if (self.is_token_manager and not self.token_manager.check_timeout()):
+        if (self.is_token_manager and (self.token is None) and (not self.token_manager.check_timeout())):
             # Token deu timeout, deve-se gerar um novo
             self.token = self.token_manager.generate_token()
 
     def remove_token(self):
+        print(TOKEN_REMOVED)
         self.token = None
 
     def send_token(self):

@@ -1,4 +1,4 @@
-from models.constants import Prefix, Style
+from models.constants import Prefix, Style, TOKEN_GENERATED, TIMEOUT_MESSAGE
 from datetime import datetime
 
 
@@ -12,9 +12,9 @@ class TokenManager:
         self.more_tokens = False
 
     def generate_token(self):
-        print('Generating token!')
         self.token = Prefix.TOKEN
         self.last_passed_at = datetime.now()
+        print(TOKEN_GENERATED)
         print(self)
         return self.token
 
@@ -40,6 +40,7 @@ class TokenManager:
 
     def check_timeout(self):
         if self._time_since_last_pass() > self.timeout:
+            print(TIMEOUT_MESSAGE)
             return False
         else:
             return True

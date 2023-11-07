@@ -63,6 +63,13 @@ Token has been generated!
 {Style.ENDC}
 """
 
+TOKEN_REMOVED  = f"""
+{Style.OKCYAN}
+{Style.BOLD}
+Token removed!
+{Style.ENDC}
+"""
+
 NOT_MANAGER = f"""
 {Style.WARNING}
 Host is NOT token manager.
@@ -71,5 +78,11 @@ Host is NOT token manager.
 INVALID_PACKAGE = f"""
 {Style.WARNING}
 Package received has invalid format.
+{Style.ENDC}
+"""
+
+TIMEOUT_MESSAGE = f"""
+{Style.FAIL}
+Token timeout!
 {Style.ENDC}
 """
