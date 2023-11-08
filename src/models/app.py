@@ -21,6 +21,7 @@ class App:
         self.closed = False
         self.messages_queue = list()
         self.is_token_manager = is_token_manager
+        self.waiting_receive = False
         self.token_manager = TokenManager(
             minimum_time=minimum_time, timeout=timeout_token)
 
@@ -50,9 +51,9 @@ class App:
 
     def add_message(self, dest_name: str, message: str):
         # TODO
-        # Adicionar probabilidade de enviar erros aleat髍ios
+        # Adicionar probabilidade de enviar erros aleat贸rios
         crc = App._generate_crc(message)
-        data = f"7777:naoexiste;{self.hostname};{dest_name};{str(crc)};{message}"
+        data = f"7777:{ErrorControl.NAOEXISTE.value};{self.hostname};{dest_name};{str(crc)};{message}"
         pkg = Package(data=data)
         print(f'pkg:\n {pkg}')
         self._insert_message(pkg)
@@ -85,10 +86,9 @@ class App:
         self.token = None
 
     def send_token(self):
-        # TODO
-        # Implementar l贸gica de enviar token para a pr贸xima m谩quina
-        if self.token is not None:
+        if (self.token is not None and (not self.waiting_receive)):
             self.send_package(package=Package(data="9000"))
+            self.token = None
 
     def send_package(self, package: Package):
         if self.closed:
@@ -100,6 +100,7 @@ class App:
             pck = "9000"
         package = pck.encode("utf-8")
         self.socket.sendto(package, (self.dest_ip, self.dest_port))
+        print(f'Package sent: {pck}')
 
     def close_socket(self):
         self.closed = True
@@ -110,35 +111,39 @@ class App:
         return pck
 
     def _verify_message_consistency(self, package: Package):
-        # TODO o que precisa verificar aqui alem do CRC?
         return self._check_crc(pck=package)
 
     def _handle_receive_token(self, package):
-        self.my_turn = True
         self.token = package.text
         if self.is_token_manager:
             if not self.token_manager.handle_token():
                 # TODO tratar situa莽玫es de problema com token
                 pass
 
+        self.send_message()
+
+    def send_message(self):
+        # TODO
+        # Implementar l贸gica de reenvio
+        if (len(self.messages_queue) > 0):
+            msg = self.messages_queue.pop(0)
+            self.send_package(msg)
+            # Setta flag indicando que enviamos mensagem e que estamos esperando ela retornar
+            self.waiting_receive = True
         else:
-            pass
+            print('No messages to send')
 
     def app_status(self):
-        # TODO 
-        return ''
-
-    def dequeue_message(self):
-        # TODO retira mensagem da fila para enviar ao pr贸ximo
-        pass
+        return f'Hostname: {self.hostname}, Next host: {self.dest_ip}:{self.dest_port}, Messages in queue: {len(self.messages_queue)}, Waiting to receive sent message: {self.waiting_receive}'
 
     def _handle_receive_data(self, package: Package):
         # Se destino for eu, verifica consistencia
         if package.dest_name == self.hostname:
-            # TODO ver error_control?
             if self._verify_message_consistency(package):
                 package.error_control = ErrorControl.ACK
                 print(package.cool_message())
+                self.waiting_receive = False
+                self.send_token()
             else:
                 package.error_control = ErrorControl.NACK
         else:
@@ -148,8 +153,6 @@ class App:
 
         if package.origin_name != self.hostname:
             self.send_package(package=package)
-
-        # self.insert_message(message=package)
 
     def _start_receive(self):
         port = self.socket.getsockname()[1]
