@@ -2,10 +2,11 @@ import socket
 import threading
 import time
 import zlib
+import random
 
 from models.package import Package
 from models.token_manager import TokenManager
-from models.constants import INVALID_PACKAGE, BROADCAST_MESSAGE, NOT_MANAGER, TOKEN_GENERATED, TOKEN_REMOVED, ErrorControl, Prefix
+import models.constants as Constants
 
 
 class App:
@@ -24,6 +25,7 @@ class App:
         self.waiting_receive = False
         self.token_manager = TokenManager(
             minimum_time=minimum_time, timeout=timeout_token)
+        self.last_message_sent = None
 
         if is_token_manager:
             self.token_manager.generate_token()
@@ -50,10 +52,14 @@ class App:
         return message
 
     def add_message(self, dest_name: str, message: str):
-        # TODO
-        # Adicionar probabilidade de enviar erros aleatórios
+        prob = random.random()
         crc = App._generate_crc(message)
-        data = f"7777:{ErrorControl.NAOEXISTE.value};{self.hostname};{dest_name};{str(crc)};{message}"
+
+        if prob < 0.15:  # 15% de probabilidade de adicionar erro
+            print(Constants.INSERTING_ERROR)
+            crc += int(prob*100)
+
+        data = f"7777:{Constants.ErrorControl.NAOEXISTE.value};{self.hostname};{dest_name};{str(crc)};{message}"
         pkg = Package(data=data)
         print(f'pkg:\n {pkg}')
         self._insert_message(pkg)
@@ -69,34 +75,37 @@ class App:
     def generate_token(self):
         if self.is_token_manager:
             self.token_manager.generate_token()
-            print(TOKEN_GENERATED)
+            print(Constants.TOKEN_GENERATED)
         else:
-            print(NOT_MANAGER)
+            print(Constants.NOT_MANAGER)
 
     def _has_message(self):
         return len(self.messages_queue) > 0
 
     def check_token_timeout(self):
-        if (self.is_token_manager and (self.token is None) and (not self.token_manager.check_timeout())):
+        if (self.is_token_manager and (not self.token_manager.check_timeout())):
             # Token deu timeout, deve-se gerar um novo
             self.token = self.token_manager.generate_token()
 
     def remove_token(self):
-        print(TOKEN_REMOVED)
+        print(Constants.TOKEN_REMOVED)
         self.token = None
 
     def send_token(self):
         if (self.token is not None and (not self.waiting_receive)):
             self.send_package(package=Package(data="9000"))
             self.token = None
+            if self.is_token_manager:
+                self.token_manager.token = None
 
     def send_package(self, package: Package):
         if self.closed:
             return
-        if package.type == Prefix.DATA:
+        if package.type == Constants.Prefix.DATA:
             pck = "7777:{0};{1};{2};{3};{4}".format(
                 package.error_control, package.origin_name, package.dest_name, package.crc, package.text)
-        elif package.type == Prefix.TOKEN:
+            self.last_message_sent = pck
+        elif package.type == Constants.Prefix.TOKEN:
             pck = "9000"
         package = pck.encode("utf-8")
         self.socket.sendto(package, (self.dest_ip, self.dest_port))
@@ -111,12 +120,12 @@ class App:
         return pck
 
     def _verify_message_consistency(self, package: Package):
-        return self._check_crc(pck=package)
+        return App._check_crc(pck=package)
 
     def _handle_receive_token(self, package):
         self.token = package.text
         if self.is_token_manager:
-            if not self.token_manager.handle_token():
+            if not self.token_manager.handle_token(self.token):
                 # TODO tratar situações de problema com token
                 pass
 
@@ -124,14 +133,18 @@ class App:
 
     def send_message(self):
         # TODO
-        # Implementar lógica de reenvio
-        if (len(self.messages_queue) > 0):
-            msg = self.messages_queue.pop(0)
-            self.send_package(msg)
-            # Setta flag indicando que enviamos mensagem e que estamos esperando ela retornar
-            self.waiting_receive = True
+        # Finalizar lógica de reenvio
+        if self.last_message_sent is None:
+            if (len(self.messages_queue) > 0):
+                msg = self.messages_queue.pop(0)
+                self.send_package(msg)
+                # Setta flag indicando que enviamos mensagem e que estamos esperando ela retornar
+                self.waiting_receive = True
+            else:
+                print('No messages to send')
+        # Significa que deve fazer o reenvio
         else:
-            print('No messages to send')
+            self.send_package(self.last_message_sent)
 
     def app_status(self):
         return f'Hostname: {self.hostname}, Next host: {self.dest_ip}:{self.dest_port}, Messages in queue: {len(self.messages_queue)}, Waiting to receive sent message: {self.waiting_receive}'
@@ -140,37 +153,38 @@ class App:
         # Se destino for eu, verifica consistencia
         if package.dest_name == self.hostname:
             if self._verify_message_consistency(package):
-                package.error_control = ErrorControl.ACK
+                package.error_control = Constants.ErrorControl.ACK
                 print(package.cool_message())
-                self.waiting_receive = False
-                self.send_token()
             else:
-                package.error_control = ErrorControl.NACK
+                package.error_control = Constants.ErrorControl.NACK
         else:
-            package.error_control = ErrorControl.NAOEXISTE
-            if package.dest_name == BROADCAST_MESSAGE:
+            package.error_control = Constants.ErrorControl.NAOEXISTE
+            if package.dest_name == Constants.BROADCAST_MESSAGE:
                 print(package.cool_message())
 
         if package.origin_name != self.hostname:
             self.send_package(package=package)
+        else:
+            self.last_message_sent = None
+            self.waiting_receive = False
+            self.send_token()
 
     def _start_receive(self):
         port = self.socket.getsockname()[1]
         while True:
             print(f"Client is receiving messages on port {port}")
             pck = self._open_package(self.socket.recvfrom(1024))
-            if pck.type == Prefix.TOKEN:
+            if pck.type == Constants.Prefix.TOKEN:
                 self._handle_receive_token(pck)
-                # TODO ver se precisa de algo a mais p tratar se pacote for Token
-            elif pck.type == Prefix.DATA:
+            elif pck.type == Constants.Prefix.DATA:
                 self._handle_receive_data(pck)
-                # TODO tratar pacote se for de dados
             else:
-                print(INVALID_PACKAGE)
+                print(Constants.INVALID_PACKAGE)
 
             print(f"Nova mensagem recebida: {pck}")
 
-    def _check_crc(self, pck: Package) -> bool:
+    @staticmethod
+    def _check_crc(pck: Package) -> bool:
         b_text = pck.text.encode("utf-8")
         crc = zlib.crc32(b_text)
         return crc == pck.crc

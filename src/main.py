@@ -41,7 +41,7 @@ def handle_choice(app: App, choice: int):
         app.add_message(dest_name=dest_name, message=message)
 
     elif choice == 1:
-        print(app.app_status)
+        print(app.app_status())
     elif choice == 2:
         if not app.is_token_manager:
             print(NOT_MANAGER)
