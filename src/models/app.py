@@ -30,12 +30,14 @@ class App:
         self.last_message_sent: Package = None
         self.already_resent = False
 
+        # Vai gerar pela primeira vez
         if is_token_manager:
             self.token = self.token_manager.generate_token()
             self.token_rcvd_time = datetime.now()
 
         self.connect_socket()
 
+    # Inicia as threads que irão receber as mensagens e verificar tokens
     def start(self):
         # Inicia thread para receber pacotes de outras maquinas
         self.thread_receiver = threading.Thread(
@@ -51,17 +53,20 @@ class App:
         source_ip = self.socket.getsockname()[0]
         self.socket.bind((source_ip, self.src_port))
 
+    # Pega a primeira mensagem da fila
     def pop_first_message(self):
         message = self.messages_queue.pop(0) if (
             len(self.messages_queue) > 0) else None
         return message
 
+    # Adiciona mensagem na fila com uma certa probabilidade de inserir crc com erro
     def add_message(self, dest_name: str, message: str):
         prob = random.random()
         crc = App._generate_crc(message)
 
-        if prob < Constants.PROB_ERROR_INSERTION:  # probabilidade de adicionar erro
+        if prob < Constants.PROB_ERROR_INSERTION:  # Probabilidade de adicionar erro
             print(Constants.INSERTING_ERROR)
+            # Adiciona em proporção ao crc para errar de propósito
             crc += int(prob*100)
 
         data = f"7777:{Constants.ErrorControl.NAOEXISTE.value};{self.hostname};{dest_name};{str(crc)};{message}"
@@ -69,6 +74,7 @@ class App:
         print(f'pkg:\n {pkg}')
         self._insert_message(pkg)
 
+    # Insere mensagem no fim da fila
     def _insert_message(self, message: Package):
         if len(self.messages_queue) < 10:
             self.messages_queue.append(message)
@@ -77,6 +83,7 @@ class App:
             print('Lista de mensagens está cheia!')
             return False
 
+    # Gera o token se for gerenciador
     def generate_token(self):
         if self.is_token_manager:
             self.token_manager.generate_token()
@@ -87,6 +94,7 @@ class App:
     def _has_message(self):
         return len(self.messages_queue) > 0
 
+    # Verifica se houve timeout no recebimento de token (se for gerenciador)
     def check_token_timeout(self):
         if (self.is_token_manager and (not self.token_manager.check_timeout())):
             # Token deu timeout, deve-se gerar um novo
@@ -96,6 +104,7 @@ class App:
         print(Constants.TOKEN_REMOVED)
         self.token = None
 
+    # Envia token ao próximo host
     def send_token(self):
         if (self.token is not None and (not self.waiting_receive)):
             token_pkg = Package(data="9000")
@@ -105,6 +114,7 @@ class App:
             if self.is_token_manager:
                 self.token_manager.token = None
 
+    # Envia pacote (vindo da fila ou de outro host) para o próximo host
     def send_package(self, package: Package):
         if self.closed:
             return
@@ -117,17 +127,21 @@ class App:
         self.socket.sendto(package, (str(self.dest_ip), int(self.dest_port)))
         print(f'Package sent: {pck}')
 
+    # Fecha conexão
     def close_socket(self):
         self.closed = True
         return self.socket.close()
 
+    # Converte uma mensagem do socket para uma instância do tipo Package para facilitar o tratamento
     def _open_package(self, package: tuple) -> Package:
         pck = Package(data=package[0].decode("utf-8"))
         return pck
 
+    # Verifica se o crc está correto
     def _verify_message_consistency(self, package: Package):
         return App._check_crc(pck=package)
 
+    # Processa token recebido
     def _handle_receive_token(self, package):
         self.token = package.text
         self.token_rcvd_time = datetime.now()
@@ -139,6 +153,7 @@ class App:
 
         self.send_message()
 
+    # Envia/reenvia mensagem da fila
     def send_message(self):
         if self.token is not None:
             if self.last_message_sent is None:
@@ -160,8 +175,9 @@ class App:
     def app_status(self):
         return f'Hostname: {self.hostname}, Next host: {self.dest_ip}:{self.dest_port}, Messages in queue: {len(self.messages_queue)}, Waiting to receive sent message: {self.waiting_receive}, Has Token: {bool(self.token)}'
 
+    # Processa mensagem recebida
     def _handle_receive_data(self, package: Package):
-        # Se destino for eu, verifica consistencia
+        # Se destino sou eu, verifica consistência
         if package.dest_name == self.hostname:
             if self._verify_message_consistency(package):
                 package.error_control = Constants.ErrorControl.ACK
@@ -172,29 +188,35 @@ class App:
         elif package.dest_name == Constants.BROADCAST_MESSAGE and package.origin_name != self.hostname:
             print(package.cool_message())
 
+        # Se não fui eu quem mandou, repassa mensagem para o próximo host
         if package.origin_name != self.hostname:
             self.send_package(package=package)
+
+        # # Se fui eu quem mandou, houve falha e já houve reenvio
         elif self.already_resent and (package.origin_name == self.hostname and package.error_control == Constants.ErrorControl.NACK):
             self.already_resent = False
-
             self.waiting_receive = False
             self.last_message_sent = None
+
+        # Se fui eu quem mandou, houve falha mas ainda não houve reenvio
         elif package.origin_name == self.hostname and package.error_control == Constants.ErrorControl.NACK:
             print(Constants.RESENDING_MESSAGE)
             self._insert_message(message=self.last_message_sent)
             self.already_resent = True
-
             self.waiting_receive = False
             self.last_message_sent = None
+
+        # Se fui eu quem mandou e não houve falha
         else:
             self.waiting_receive = False
             self.last_message_sent = None
 
+    # Começa a ouvir mensagens na porta definida
     def _start_receive(self):
         port = self.socket.getsockname()[1]
         print(f"Client is receiving messages on port {port}")
         while True:
-
+            # Se receber mensagem, processa a mesma
             pck = self._open_package(self.socket.recvfrom(1024))
             if pck.type == Constants.Prefix.TOKEN:
                 self._handle_receive_token(pck)
@@ -205,6 +227,7 @@ class App:
 
             print(f"Nova mensagem recebida: {pck}")
 
+    # Começa a verificar situação do token
     def _start_tokensleep_check(self):
         print(f"Thread is checking for token sleep")
         while True:
@@ -212,19 +235,23 @@ class App:
             if self.token_rcvd_time and self._check_if_token_expired():
                 print("Token sleep time expired, sending to next..")
                 self.send_token()
-   
+
+    # Veririca se token expirou
     def _check_if_token_expired(self) -> bool:
         if self.token_rcvd_time:
-            time_since_received = int((datetime.now()-self.token_rcvd_time).total_seconds()) # em segundos
+            time_since_received = int(
+                (datetime.now()-self.token_rcvd_time).total_seconds())  # em segundos
             return time_since_received >= self.sleep_time
         return False
 
+    # Verifica crc
     @staticmethod
     def _check_crc(pck: Package) -> bool:
         b_text = pck.text.encode("utf-8")
         crc = zlib.crc32(b_text)
         return crc == pck.crc
 
+    # Gera crc
     @staticmethod
     def _generate_crc(text: str) -> int:
         ecd = text.encode("utf-8")

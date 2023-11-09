@@ -11,6 +11,7 @@ class TokenManager:
         self.has_timeout = False
         self.more_tokens = False
 
+    # Gera token
     def generate_token(self):
         self.token = Constants.Prefix.TOKEN
         self.last_passed_at = datetime.now()
@@ -41,6 +42,7 @@ class TokenManager:
     def _time_since_last_pass(self) -> int:
         return int((datetime.now()-self.last_passed_at).total_seconds() * 1000)
 
+    # Verifica timeout
     def check_timeout(self):
         if (self.token is None and self.timeout > 0 and self._time_since_last_pass() > self.timeout):
             print(Constants.TIMEOUT_MESSAGE)
@@ -48,6 +50,7 @@ class TokenManager:
         else:
             return True
 
+    # Verifica tempo mínimo
     def _check_minimum_time(self):
         if (self.minimum_time > 0 and self._time_since_last_pass() < self.minimum_time):
             return False

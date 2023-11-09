@@ -16,23 +16,14 @@ BROADCAST_MESSAGE = 'TODOS'
 
 PROB_ERROR_INSERTION = 0.8
 
-class Style:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
 
 ######################################################
 # Defina as propriedades abaixo:
 # Arquivo de configuracao
 # Porta do socket
 # Numero de maquinas ligadas na rede
+
+# Constantes de configuração
 
 ONLINE_MACHINES = 3
 
@@ -57,6 +48,21 @@ MENU = f"""
  4- Remove Token;
 {Style.ENDC}
 """
+
+# Constantes de log
+
+
+class Style:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 
 INSERTING_ERROR = f"{Style.WARNING}Inserting error in crc.{Style.ENDC}"
 

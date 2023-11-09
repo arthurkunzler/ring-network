@@ -11,6 +11,7 @@ class Package:
         self.text = None
         self._split_data(data)
 
+    # Estiliza mensagem
     def cool_message(self):
         return f"Mensagem: {Style.OKCYAN}{Style.BOLD}{self.text}{Style.ENDC}"
 
