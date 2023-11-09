@@ -25,6 +25,7 @@ def run_client(app: App):
     app.start()
     while not app.closed:
         app.check_token_timeout()
+        app.send_message()
         handle_choice(app, handle_menu())
 
 

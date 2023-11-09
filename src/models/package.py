@@ -1,4 +1,4 @@
-from models.constants import Prefix
+from models.constants import Prefix, Style
 
 
 class Package:
@@ -12,8 +12,7 @@ class Package:
         self._split_data(data)
 
     def cool_message(self):
-        # TODO deixar bonitinho o print de mensagem
-        return self.text
+        return f"Mensagem: {Style.OKCYAN}{Style.BOLD}{self.text}{Style.ENDC}"
 
     def __repr__(self) -> str:
         return f"""
@@ -30,6 +29,7 @@ Text: {self.text}.
         parts = data.split(":")
         if parts[0] == Prefix.TOKEN.value:
             self.type = Prefix.TOKEN
+            self.text = Prefix.TOKEN.value
         elif parts[0] == Prefix.DATA.value:
             self.type = Prefix.DATA
 

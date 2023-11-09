@@ -27,9 +27,15 @@ class Style:
     UNDERLINE = '\033[4m'
 
 
+# CONFIG_FILE = "config_manager.txt"
+# SOURCE_PORT = 12345
+
 # CONFIG_FILE = "config.txt"
-CONFIG_FILE = "config_manager.txt"
-SOURCE_PORT = 12345
+# SOURCE_PORT = 6000
+
+CONFIG_FILE = "config_2.txt"
+SOURCE_PORT = 6001
+
 
 MENU = f"""
 {Style.BOLD}
@@ -60,4 +66,8 @@ TIMEOUT_MESSAGE = f"{Style.FAIL}Token timeout!{Style.ENDC}"
 
 MORE_THAN_ONE_TOKEN = f"{Style.FAIL}More than one token on network! Need to remove one.{Style.ENDC}"
 
-TOKEN_OK = F"{Style.OKGREEN}Token is OK{Style.ENDC}"
+TOKEN_OK = f"{Style.OKGREEN}Token is OK{Style.ENDC}"
+
+TOKEN_RECEIVED = f"{Style.OKGREEN}Token received!{Style.ENDC}"
+
+ERROR_IN_MESSAGE = f"{Style.FAIL}Token received!{Style.ENDC}"
