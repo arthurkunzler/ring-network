@@ -14,27 +14,27 @@ class Prefix(Enum):
 
 BROADCAST_MESSAGE = 'TODOS'
 
-PROB_ERROR_INSERTION = 0.8
 
-
+PROB_ERROR_INSERTION = 0.5
+######################################################
+# CONSTANTES DE CONFIGURAÇÂO
 ######################################################
 # Defina as propriedades abaixo:
 # Arquivo de configuracao
 # Porta do socket
 # Numero de maquinas ligadas na rede
 
-# Constantes de configuração
 
 ONLINE_MACHINES = 3
 
-CONFIG_FILE = "config_manager.txt"
-SOURCE_PORT = 12345
+# CONFIG_FILE = "config_manager.txt"
+# SOURCE_PORT = 12345
 
 # CONFIG_FILE = "config.txt"
 # SOURCE_PORT = 6000
 
-# CONFIG_FILE = "config_2.txt"
-# SOURCE_PORT = 6001
+CONFIG_FILE = "config_2.txt"
+SOURCE_PORT = 6001
 
 ######################################################
 
