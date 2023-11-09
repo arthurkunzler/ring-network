@@ -1,6 +1,6 @@
 from models.app import App
-from models.constants import INVALID_OPTION, MENU, NOT_MANAGER, CONFIG_FILE, SOURCE_PORT, INVALID_CONFIG
 from src.models.token_manager import TokenManager
+from models.constants import INVALID_OPTION, MENU, NOT_MANAGER, CONFIG_FILE, SOURCE_PORT, INVALID_CONFIG, EXIT_APP_MESSAGE
 
 
 def parse_config_file(file: str):
@@ -25,10 +25,14 @@ def parse_config_file(file: str):
 def run_client(app: App):
     app.start()
     while not app.closed:
-        app.check_token_timeout()
-        app.send_message()
-        handle_choice(app, handle_menu())
-        print("teste")
+        try:
+            app.check_token_timeout()
+            app.send_message()
+            handle_choice(app, handle_menu())
+            print("teste")
+        except KeyboardInterrupt as e:
+            print(EXIT_APP_MESSAGE)
+            app.close_socket()
 
 
 def handle_choice(app: App, choice: int):

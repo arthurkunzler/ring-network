@@ -36,6 +36,7 @@ class App:
         self.connect_socket()
 
     def start(self):
+        # Inicia thread para receber pacotes de outras maquinas
         self.thread_receiver = threading.Thread(
             target=self._start_receive, args=(), daemon=True)
         self.thread_receiver.start()

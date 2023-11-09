@@ -73,3 +73,5 @@ TOKEN_RECEIVED = f"{Style.OKGREEN}Token received!{Style.ENDC}"
 ERROR_IN_MESSAGE = f"{Style.FAIL}Message had inconsistent CRC. Setting to NACK..{Style.ENDC}"
 
 RESENDING_MESSAGE = f"{Style.WARNING}Message is beeing resent...{Style.ENDC}"
+
+EXIT_APP_MESSAGE = f"{Style.FAIL}App is shutting down...{Style.ENDC}"
