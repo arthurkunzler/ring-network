@@ -50,7 +50,7 @@ MENU = f"""
 
 INSERTING_ERROR = f"{Style.WARNING}Inserting error in crc.{Style.ENDC}"
 
-INVALID_OPTION = f"{Style.FAIL}{Style.BOLD}Invalid option! Please a valid option.{Style.ENDC}"
+INVALID_OPTION = f"{Style.FAIL}{Style.BOLD}Invalid option! Please choose a valid option.{Style.ENDC}"
 
 INVALID_CONFIG = f"{Style.FAIL}{Style.BOLD}Invalid config file. Try again!{Style.ENDC}"
 
@@ -70,4 +70,6 @@ TOKEN_OK = f"{Style.OKGREEN}Token is OK{Style.ENDC}"
 
 TOKEN_RECEIVED = f"{Style.OKGREEN}Token received!{Style.ENDC}"
 
-ERROR_IN_MESSAGE = f"{Style.FAIL}Token received!{Style.ENDC}"
+ERROR_IN_MESSAGE = f"{Style.FAIL}Message had inconsistent CRC. Setting to NACK..{Style.ENDC}"
+
+RESENDING_MESSAGE = f"{Style.WARNING}Message is beeing resent...{Style.ENDC}"

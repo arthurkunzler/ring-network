@@ -1,5 +1,6 @@
 from models.app import App
 from models.constants import INVALID_OPTION, MENU, NOT_MANAGER, CONFIG_FILE, SOURCE_PORT, INVALID_CONFIG
+from src.models.token_manager import TokenManager
 
 
 def parse_config_file(file: str):
@@ -12,7 +13,7 @@ def parse_config_file(file: str):
         ip = addresses[0]
         port = addresses[1]
         hostname = lines[1].strip()
-        time = int(lines[2].strip()) * 1000
+        time = int(lines[2].strip()) * 1000 # transforma em ms
         start_w_token = lines[3].strip()
         if start_w_token == "true":
             start_w_token = True
@@ -27,6 +28,7 @@ def run_client(app: App):
         app.check_token_timeout()
         app.send_message()
         handle_choice(app, handle_menu())
+        print("teste")
 
 
 def handle_choice(app: App, choice: int):
@@ -67,12 +69,16 @@ def handle_menu() -> int:
 
 
 def main():
-    dest_ip, port, hostname, timeout, start_w_token = parse_config_file(
+    dest_ip, port, hostname, sleep, start_w_token = parse_config_file(
         file=CONFIG_FILE)
-    print(f"IP {dest_ip} port {port} hostname {hostname} token_time {timeout} start {start_w_token}")
+    print(f"IP {dest_ip} port {port} hostname {hostname} token_time {sleep} start {start_w_token}")
     # Add parâmetros relativos ao gerenciamento de token
+    members_on_network = 3
+    timeout = (sleep * members_on_network) * 1.15
+    token_mng = TokenManager(
+            minimum_time=0, timeout=timeout)
     app = App(dest_ip=dest_ip, dest_port=port, src_port=SOURCE_PORT,
-              hostname=hostname, is_token_manager=start_w_token, timeout_token=timeout)
+              hostname=hostname, is_token_manager=start_w_token, sleep_time=(sleep/1000), token_manager=token_mng)
 
     run_client(app=app)
 

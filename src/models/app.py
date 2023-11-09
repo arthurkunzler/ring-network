@@ -1,3 +1,4 @@
+from datetime import datetime
 import socket
 import threading
 import time
@@ -10,7 +11,7 @@ import models.constants as Constants
 
 
 class App:
-    def __init__(self, dest_ip: str, dest_port: int, src_port: int, hostname: str, is_token_manager: bool = False, timeout_token: int = 0, minimum_time: int = 0):
+    def __init__(self, dest_ip: str, dest_port: int, src_port: int, hostname: str, is_token_manager: bool = False, sleep_time: int = 0, token_manager: TokenManager = None):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.dest_ip = dest_ip
@@ -23,12 +24,14 @@ class App:
         self.messages_queue = list()
         self.is_token_manager = is_token_manager
         self.waiting_receive = False
-        self.token_manager = TokenManager(
-            minimum_time=minimum_time, timeout=timeout_token)
+        self.sleep_time = sleep_time
+        self.token_rcvd_time = None
+        self.token_manager = token_manager
         self.last_message_sent: Package = None
 
         if is_token_manager:
             self.token = self.token_manager.generate_token()
+            self.token_rcvd_time = datetime.now()
 
         self.connect_socket()
 
@@ -121,30 +124,38 @@ class App:
 
     def _handle_receive_token(self, package):
         self.token = package.text
+        self.token_rcvd_time = datetime.now()
         if self.is_token_manager:
             if not self.token_manager.handle_token(self.token):
                 self.token = None
                 # TODO tratar situações de problema com token
                 pass
-
-        print(Constants.TOKEN_RECEIVED)
+            else:
+                print(Constants.TOKEN_RECEIVED)
 
         self.send_message()
 
     def send_message(self):
         if self.token is not None:
             if self.last_message_sent is None:
+                msg = self.pop_first_message()
+                while (len(self.messages_queue) > 0)
                 if (len(self.messages_queue) > 0):
                     msg = self.messages_queue.pop(0)
                     self.send_package(msg)
                     # Setta flag indicando que enviamos mensagem e que estamos esperando ela retornar
                     self.waiting_receive = True
                 else:
-                    print('No messages to send')
+                    print('No messages to send. Waiting token sleep..')
+
             else:
+                print(Constants.RESENDING_MESSAGE)
+                print(self.last_message_sent)
                 # TODO
                 # lógica de reenvio
-                pass
+                self.send_package(self.last_message_sent)
+                self.last_message_sent = None
+                self.waiting_receive = False
 
         # Significa que deve fazer o reenvio
         # else:
