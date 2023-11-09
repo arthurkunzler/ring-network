@@ -35,10 +35,11 @@ Text: {self.text}.
 
         if len(parts) > 1:
             msg = parts[1].split(";")
-            print(f"AQUII {msg[0]}")
-            if msg[0].strip() is ErrorControl.ACK.value:
+            print(f"AQUII {msg[0].strip()}")
+            print(f"msg is {msg}")
+            if msg[0] in ErrorControl.ACK.value:
                 self.error_control = ErrorControl.ACK
-            elif msg[0].strip() is ErrorControl.NACK.value:
+            elif msg[0] in ErrorControl.NACK.value:
                 self.error_control = ErrorControl.NACK
             else:
                 self.error_control = ErrorControl.NAOEXISTE
