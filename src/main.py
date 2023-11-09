@@ -1,6 +1,6 @@
 from models.app import App
 from models.token_manager import TokenManager
-from models.constants import INVALID_OPTION, MENU, NOT_MANAGER, CONFIG_FILE, SOURCE_PORT, INVALID_CONFIG, EXIT_APP_MESSAGE
+from models.constants import INVALID_OPTION, MENU, NOT_MANAGER, CONFIG_FILE, ONLINE_MACHINES, SOURCE_PORT, INVALID_CONFIG, EXIT_APP_MESSAGE
 
 
 def parse_config_file(file: str):
@@ -76,10 +76,10 @@ def main():
         file=CONFIG_FILE)
     print(f"IP {dest_ip} port {port} hostname {hostname} token_time {sleep} start {start_w_token}")
     # Add parâmetros relativos ao gerenciamento de token
-    members_on_network = 3
-    timeout = (sleep * members_on_network) * 1.15
+    timeout = (sleep * ONLINE_MACHINES) * 1.15
     token_mng = TokenManager(
             minimum_time=0, timeout=timeout)
+    # instancia nova App (host da rede)
     app = App(dest_ip=dest_ip, dest_port=port, src_port=SOURCE_PORT,
               hostname=hostname, is_token_manager=start_w_token, sleep_time=(sleep/1000), token_manager=token_mng)
 

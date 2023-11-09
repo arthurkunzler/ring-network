@@ -28,6 +28,7 @@ class App:
         self.token_rcvd_time = None
         self.token_manager = token_manager
         self.last_message_sent: Package = None
+        self.already_resent = False
 
         if is_token_manager:
             self.token = self.token_manager.generate_token()
@@ -110,7 +111,6 @@ class App:
         if package.type == Constants.Prefix.DATA:
             pck = "7777:{0};{1};{2};{3};{4}".format(
                 package.error_control.value, package.origin_name, package.dest_name, package.crc, package.text)
-            # self.last_message_sent = pck
         elif package.type == Constants.Prefix.TOKEN:
             pck = "9000"
         package = pck.encode("utf-8")
@@ -134,8 +134,6 @@ class App:
         if self.is_token_manager:
             if not self.token_manager.handle_token(self.token):
                 self.token = None
-                # TODO tratar situações de problema com token
-                pass
             else:
                 print(Constants.TOKEN_RECEIVED)
 
@@ -144,8 +142,6 @@ class App:
     def send_message(self):
         if self.token is not None:
             if self.last_message_sent is None:
-                # msg = self.pop_first_message()
-                # while (len(self.messages_queue) > 0)
                 if (len(self.messages_queue) > 0):
                     msg = self.messages_queue.pop(0)
                     self.send_package(msg)
@@ -157,8 +153,6 @@ class App:
 
             else:
                 print(Constants.RESENDING_MESSAGE)
-                # TODO
-                # lógica de reenvio
                 self.send_package(self.last_message_sent)
                 self.last_message_sent = None
                 self.waiting_receive = False
@@ -175,21 +169,26 @@ class App:
             else:
                 package.error_control = Constants.ErrorControl.NACK
                 print(Constants.ERROR_IN_MESSAGE)
-        else:
-            package.error_control = Constants.ErrorControl.NAOEXISTE
-            if package.dest_name == Constants.BROADCAST_MESSAGE:
-                print(package.cool_message())
+        elif package.dest_name == Constants.BROADCAST_MESSAGE and package.origin_name != self.hostname:
+            print(package.cool_message())
 
         if package.origin_name != self.hostname:
             self.send_package(package=package)
-        elif package.origin_name == self.hostname and self.waiting_receive and package.error_control == Constants.ErrorControl.NACK:
+        elif self.already_resent and (package.origin_name == self.hostname and package.error_control == Constants.ErrorControl.NACK):
+            self.already_resent = False
+
+            self.waiting_receive = False
+            self.last_message_sent = None
+        elif package.origin_name == self.hostname and package.error_control == Constants.ErrorControl.NACK:
+            print(Constants.RESENDING_MESSAGE)
             self._insert_message(message=self.last_message_sent)
+            self.already_resent = True
+
             self.waiting_receive = False
             self.last_message_sent = None
         else:
             self.waiting_receive = False
             self.last_message_sent = None
-            self.send_token()
 
     def _start_receive(self):
         port = self.socket.getsockname()[1]

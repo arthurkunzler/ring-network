@@ -28,6 +28,14 @@ class Style:
     UNDERLINE = '\033[4m'
 
 
+######################################################
+# Defina as propriedades abaixo:
+# Arquivo de configuracao
+# Porta do socket
+# Numero de maquinas ligadas na rede
+
+ONLINE_MACHINES = 3
+
 CONFIG_FILE = "config_manager.txt"
 SOURCE_PORT = 12345
 
@@ -37,6 +45,7 @@ SOURCE_PORT = 12345
 # CONFIG_FILE = "config_2.txt"
 # SOURCE_PORT = 6001
 
+######################################################
 
 MENU = f"""
 {Style.BOLD}
@@ -73,6 +82,6 @@ TOKEN_RECEIVED = f"{Style.OKGREEN}Token received!{Style.ENDC}"
 
 ERROR_IN_MESSAGE = f"{Style.FAIL}Message had inconsistent CRC. Setting to NACK..{Style.ENDC}"
 
-RESENDING_MESSAGE = f"{Style.WARNING}Message is beeing resent...{Style.ENDC}"
+RESENDING_MESSAGE = f"{Style.WARNING}Message was added to queue to be resent!{Style.ENDC}"
 
 EXIT_APP_MESSAGE = f"{Style.FAIL}App is shutting down...{Style.ENDC}"
