@@ -40,6 +40,10 @@ class App:
         self.thread_receiver = threading.Thread(
             target=self._start_receive, args=(), daemon=True)
         self.thread_receiver.start()
+
+        self.thread_token_sleep = threading.Thread(
+            target=self._start_tokensleep_check, args=(), daemon=True)
+        self.thread_token_sleep.start()
         time.sleep(1)
 
     def connect_socket(self):
@@ -96,6 +100,7 @@ class App:
             token_pkg = Package(data="9000")
             self.send_package(package=token_pkg)
             self.token = None
+            self.token_rcvd_time = None
             if self.is_token_manager:
                 self.token_manager.token = None
 
@@ -139,8 +144,8 @@ class App:
     def send_message(self):
         if self.token is not None:
             if self.last_message_sent is None:
-                msg = self.pop_first_message()
-                while (len(self.messages_queue) > 0)
+                # msg = self.pop_first_message()
+                # while (len(self.messages_queue) > 0)
                 if (len(self.messages_queue) > 0):
                     msg = self.messages_queue.pop(0)
                     self.send_package(msg)
@@ -200,6 +205,18 @@ class App:
                 print(Constants.INVALID_PACKAGE)
 
             print(f"Nova mensagem recebida: {pck}")
+
+    def _start_tokensleep_check(self):
+        print(f"Thread is checking for token sleep")
+        while True:
+            # print(f"{self.token_rcvd_time} and {self.sleep_time}")
+            if self.token_rcvd_time and self._check_if_token_expired():
+                print("Token sleep time expired, sending to next..")
+                self.send_token()
+   
+    def _check_if_token_expired(self) -> bool:
+        time_since_received = int((datetime.now()-self.token_rcvd_time).total_seconds()) # em segundos
+        return time_since_received >= self.sleep_time
 
     @staticmethod
     def _check_crc(pck: Package) -> bool:
