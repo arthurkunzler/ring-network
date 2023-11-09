@@ -59,7 +59,7 @@ class App:
         prob = random.random()
         crc = App._generate_crc(message)
 
-        if prob < 0.15:  # 15% de probabilidade de adicionar erro
+        if prob < Constants.PROB_ERROR_INSERTION:  # probabilidade de adicionar erro
             print(Constants.INSERTING_ERROR)
             crc += int(prob*100)
 
@@ -109,8 +109,8 @@ class App:
             return
         if package.type == Constants.Prefix.DATA:
             pck = "7777:{0};{1};{2};{3};{4}".format(
-                package.error_control, package.origin_name, package.dest_name, package.crc, package.text)
-            self.last_message_sent = pck
+                package.error_control.value, package.origin_name, package.dest_name, package.crc, package.text)
+            # self.last_message_sent = pck
         elif package.type == Constants.Prefix.TOKEN:
             pck = "9000"
         package = pck.encode("utf-8")
@@ -151,21 +151,17 @@ class App:
                     self.send_package(msg)
                     # Setta flag indicando que enviamos mensagem e que estamos esperando ela retornar
                     self.waiting_receive = True
+                    self.last_message_sent = msg
                 else:
                     print('No messages to send. Waiting token sleep..')
 
             else:
                 print(Constants.RESENDING_MESSAGE)
-                print(self.last_message_sent)
                 # TODO
                 # lógica de reenvio
                 self.send_package(self.last_message_sent)
                 self.last_message_sent = None
                 self.waiting_receive = False
-
-        # Significa que deve fazer o reenvio
-        # else:
-        #     self.send_package(self.last_message_sent)
 
     def app_status(self):
         return f'Hostname: {self.hostname}, Next host: {self.dest_ip}:{self.dest_port}, Messages in queue: {len(self.messages_queue)}, Waiting to receive sent message: {self.waiting_receive}, Has Token: {bool(self.token)}'
@@ -186,9 +182,13 @@ class App:
 
         if package.origin_name != self.hostname:
             self.send_package(package=package)
-        else:
-            self.last_message_sent = None
+        elif package.origin_name == self.hostname and self.waiting_receive and package.error_control == Constants.ErrorControl.NACK:
+            self._insert_message(message=self.last_message_sent)
             self.waiting_receive = False
+            self.last_message_sent = None
+        else:
+            self.waiting_receive = False
+            self.last_message_sent = None
             self.send_token()
 
     def _start_receive(self):
@@ -209,14 +209,16 @@ class App:
     def _start_tokensleep_check(self):
         print(f"Thread is checking for token sleep")
         while True:
-            # print(f"{self.token_rcvd_time} and {self.sleep_time}")
+            time.sleep(0.001)
             if self.token_rcvd_time and self._check_if_token_expired():
                 print("Token sleep time expired, sending to next..")
                 self.send_token()
    
     def _check_if_token_expired(self) -> bool:
-        time_since_received = int((datetime.now()-self.token_rcvd_time).total_seconds()) # em segundos
-        return time_since_received >= self.sleep_time
+        if self.token_rcvd_time:
+            time_since_received = int((datetime.now()-self.token_rcvd_time).total_seconds()) # em segundos
+            return time_since_received >= self.sleep_time
+        return False
 
     @staticmethod
     def _check_crc(pck: Package) -> bool:

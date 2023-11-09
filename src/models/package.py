@@ -1,10 +1,10 @@
-from models.constants import Prefix, Style
+from models.constants import ErrorControl, Prefix, Style
 
 
 class Package:
     def __init__(self, data: str):
         self.type = None
-        self.error_control = None
+        self.error_control: ErrorControl = None
         self.origin_name = None
         self.dest_name = None
         self.crc = None
@@ -35,7 +35,14 @@ Text: {self.text}.
 
         if len(parts) > 1:
             msg = parts[1].split(";")
-            self.error_control = msg[0]
+            print(f"AQUII {msg[0]}")
+            if msg[0].strip() is ErrorControl.ACK.value:
+                self.error_control = ErrorControl.ACK
+            elif msg[0].strip() is ErrorControl.NACK.value:
+                self.error_control = ErrorControl.NACK
+            else:
+                self.error_control = ErrorControl.NAOEXISTE
+
             self.origin_name = msg[1]
             self.dest_name = msg[2]
             self.crc = int(msg[3])

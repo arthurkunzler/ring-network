@@ -2,9 +2,9 @@ from enum import Enum
 
 
 class ErrorControl(Enum):
-    NAOEXISTE = "naoexiste"
-    ACK = "ACK"
-    NACK = "NACK"
+    NAOEXISTE = 'naoexiste'
+    ACK = 'ACK'
+    NACK = 'NACK'
 
 
 class Prefix(Enum):
@@ -14,6 +14,7 @@ class Prefix(Enum):
 
 BROADCAST_MESSAGE = 'TODOS'
 
+PROB_ERROR_INSERTION = 0.8
 
 class Style:
     HEADER = '\033[95m'
